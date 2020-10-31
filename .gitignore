@@ -1,0 +1,12 @@
+__pycache__
+
+# Pycharm / Intellij
+*.idea
+*.code-workspace
+
+.project
+.vscode
+
+# sqlite
+*.sqlite
+*.sqlite3
