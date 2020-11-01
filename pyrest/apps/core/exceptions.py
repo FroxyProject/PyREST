@@ -1,5 +1,10 @@
+import logging
+
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework import exceptions, views
+
+
+logger = logging.getLogger(__name__)
 
 
 def exception_handler(exc, context):
@@ -18,23 +23,22 @@ def exception_handler(exc, context):
         else:
             new_exc = exceptions.APIException('Unknown exception!')
         response = views.exception_handler(new_exc, context)
-    if response is not None:
-        if isinstance(response.data, list):
-            return response
-        response.data = make_response(response.data['detail'] if 'detail' in response.data else response.data, response.status_code)
+    if isinstance(response.data, list):
+        error_message = response.data
+    elif 'detail' in response.data:
+        error_message = response.data['detail']
+    else:
+        error_message = response.data
+    response.data = {
+        'exception': error_message,
+    }
 
     # Check if it's an error 500
+    # TODO Find a better place to put this error
     if response.status_code >= 500:
-        print('Got error %d' % (response.status_code))
-        print(response)
-        print('Original error:')
-        print(exc)
+        logger.error('Got error %d', response.status_code)
+        logger.error('Response:')
+        logger.error(response)
+        logger.error('Original error:')
+        logger.error(exc)
     return response
-
-
-def make_response(error_message, status_code):
-    return {
-        'error': True,
-        'error_message': error_message,
-        'status_code': status_code,
-    }
